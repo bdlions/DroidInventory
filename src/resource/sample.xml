@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Queue>
+    <id>1</id>
+    <name>Q1</name>
+	<Customer>
+	    <id>1</id>
+	    <name>Alamgir Kabir</name>
+		<Country>
+		    <name>Bangladesh</name>
+		    <code>88</code>
+	    </Country>
+		<Phone>
+		    <PhoneNo>01712341213</PhoneNo>
+			<Dial>
+				<Status>0</Status>
+				<StatusText>N/A</StatusText>
+				<ErrorCode>0</ErrorCode>
+				<ErrorText>N/A</ErrorText>
+				<CallCount>1</CallCount>
+			</Dial>
+			<Message>
+				<Status>0</Status>
+				<StatusText>N/A</StatusText>
+				<ErrorCode>0</ErrorCode>
+				<ErrorText>N/A</ErrorText>
+				<SMSCount>1</SMSCount>
+			</Message>
+		</Phone>
+	</Customer>
+</Queue>

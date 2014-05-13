@@ -1,0 +1,31 @@
+{
+
+    "id": "1",
+    "name": "Q1",
+    "customer":[ {
+      "id": "1",
+      "name": "Alamgir Kabir",
+      "country": {
+        "name": "Bangladesh",
+        "code": "88"
+      },
+      "phone": {
+        "phoneNo": "01712341213",
+        "phoneCall": {
+          "status": "0",
+          "statusText": "N/A",
+          "errorCode": "0",
+          "errorText": "N/A",
+          "callCount": "1"
+        },
+        "message": {
+          "status": "0",
+          "statusText": "N/A",
+          "errorCode": "0",
+          "errorText": "N/A",
+          "sMSCount": "1"
+        }
+      }]
+    }
+
+}
