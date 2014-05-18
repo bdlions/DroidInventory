@@ -10,7 +10,7 @@
           "code": "88"
         },
         "phone": {
-          "phoneNo": "01712341213",
+          "phoneNo": "5556",
           "dial": {
             "status": "0",
             "statusText": "N/A",
@@ -19,6 +19,7 @@
             "callCount": "1"
           },
           "message": {
+          	"content":"This is my first message",
             "status": "0",
             "statusText": "N/A",
             "errorCode": "0",
@@ -35,7 +36,7 @@
           "code": "88"
         },
         "phone": {
-          "phoneNo": "01712344444",
+          "phoneNo": "5554",
           "dial": {
             "status": "0",
             "statusText": "N/A",
@@ -44,6 +45,7 @@
             "callCount": "1"
           },
           "message": {
+            "content":"This is test message1",
             "status": "0",
             "statusText": "N/A",
             "errorCode": "0",
