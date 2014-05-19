@@ -1,4 +1,4 @@
-package com.webinventory.parser;
+package com.webinventory.parser.customer;
 
 public class Customer {
 	public int id;
