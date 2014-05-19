@@ -8,6 +8,7 @@
         android:minSdkVersion="8"
         android:targetSdkVersion="18" />
 
+
     <uses-permission android:name="android.permission.CALL_PHONE" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     <uses-permission android:name="android.permission.PROCESS_OUTGOING_CALLS" />
@@ -16,6 +17,7 @@
     <uses-permission android:name="android.permission.RECEIVE_SMS" />
     <uses-permission android:name="android.permission.READ_SMS" />
     <uses-permission android:name="android.permission.WRITE_SMS" />
+
 
     <application
         android:allowBackup="true"
@@ -54,6 +56,7 @@
             android:name="com.webinventory.AActivity"
             android:label="@string/title_activity_a" >
         </activity>
+
     </application>
 
 </manifest>
