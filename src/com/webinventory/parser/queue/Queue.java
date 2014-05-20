@@ -1,7 +1,7 @@
 package com.webinventory.parser.queue;
 
 public class Queue {
-	int id;
-	String name;
-	int noOfMsgs;
+	public int id;
+	public String name;
+	public int noOfMsgs;
 }

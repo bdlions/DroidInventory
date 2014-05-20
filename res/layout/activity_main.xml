@@ -4,5 +4,32 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context="com.webinventory.MainActivity"
-    tools:ignore="MergeRootFrame" />
+    tools:ignore="MergeRootFrame" >
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center_horizontal"
+        android:orientation="vertical" >
+        
+        <TableLayout
+            android:id="@+id/tlQueueList"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"  
+ 			android:layout_weight="1.0"
+            android:padding="10dp"
+            android:shrinkColumns="*"
+            android:stretchColumns="*" >
+        </TableLayout>
+
+        <Button
+            android:id="@+id/btnQueueSelect"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:onClick="sendSelectedQueue"
+            android:text="Send selected Queue" />
+        
+    </LinearLayout>
+
+</FrameLayout>
 

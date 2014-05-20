@@ -1,27 +1,20 @@
 package com.webinventory;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-
+import org.alexd.jsonrpc.JSONRPCClient;
+import org.alexd.jsonrpc.JSONRPCException;
+import org.alexd.jsonrpc.JSONRPCParams.Versions;
 
 import android.app.Activity;
-import android.app.DownloadManager.Query;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
-import android.telephony.PhoneStateListener;
 import android.telephony.SmsManager;
-import android.telephony.TelephonyManager;
-
-import android.util.Log;
 import android.view.Menu;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.TableLayout;
@@ -30,110 +23,33 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.TableRow.LayoutParams;
 
-
 import com.google.gson.Gson;
 import com.webinventory.parser.customer.Customer;
 import com.webinventory.parser.customer.Queue;
 
 public class MenuActivity extends Activity {
 	private Button button;
-	final Context context = this;
-	private Queue queue;
-	TableLayout table_layout;
-	
 	TableRow tableRow;
 	TextView textView;
+	TableLayout table_layout;
 	
+	final Context context = this;
+	private Queue queue;
+	
+	private int qId;
 	static int i;
-	
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_menu);
-		
+
 		table_layout = (TableLayout) findViewById(R.id.tableLayout1);
 		button = (Button) findViewById(R.id.buttonSendSMS);
 
-		String[][] customer_info = new String[3][3];
-
-	
-		Gson gson = new Gson();
-		BufferedReader bufferedReader;
-		BufferedInputStream bis = new BufferedInputStream(this.getResources()
-				.openRawResource(R.raw.sample2));
-		bufferedReader = new BufferedReader(new InputStreamReader(bis));
-
-		queue = gson.fromJson(bufferedReader, Queue.class);
-		
-		i = 0;
-		for (Customer customer : queue.customer) {
-
-			tableRow = new TableRow(this); tableRow.setLayoutParams(new
-					  LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
-
-			String content = customer.phone.message.content;
-			String phoneNo = customer.phone.phoneNo;
-
-			customer_info[i][0] = phoneNo;
-			customer_info[i][1] = content;
-
-			CheckBox box = new CheckBox(this);
-			box.setId(i);
-			box.setChecked(true);
-			
-			// for testing clicked ckeck button
-			/*box.setOnClickListener( new View.OnClickListener() {
-			     public void onClick(View v) {
-			    	 if (((CheckBox) v).isChecked()) {
-				    	 Toast.makeText(MenuActivity.this,"hello :)" + "Id: " + v.getId(), Toast.LENGTH_LONG).show();
-			    	 }
-			     }
-			    });*/
-			
-			//gson.toJson(queue);
-			tableRow.addView(box);
-			for (int j = 0; j < customer_info.length; j++) {
-				
-				textView = new TextView(this);
-				textView.setLayoutParams(new
-						 LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT));
-				
-				textView.setTextColor(0xFF000000);
-				textView.setText(customer_info[i][j]);
-				textView.setPadding(1, 1, 1, 1);
-				
-				tableRow.addView(textView);
-			}
-			table_layout.addView(tableRow);
-			i++;
-		}
-
-		button.setOnClickListener(new View.OnClickListener() {
-			public void onClick(View v) {
-				for (int i = 0, j = table_layout.getChildCount(); i < j; i++) {
-					TableRow row = (TableRow) table_layout.getChildAt(i);
-
-					CheckBox checkBox = (CheckBox) row.getChildAt(0);
-					if (checkBox.isChecked()) {
-						int customerIndex = checkBox.getId();
-
-						Customer customer = queue.customer.get(customerIndex);
-						String phoneNo = customer.phone.phoneNo;
-						String content = customer.phone.message.content;
-
-						if (phoneNo.length() > 0 && content.length() > 0) {
-							sendSMS(phoneNo, content);
-							Toast.makeText(getBaseContext(), "Send message to " + phoneNo, Toast.LENGTH_LONG).show();;
-						} else
-							Toast.makeText(
-									getBaseContext(),
-									"Please enter both phone number and message.",
-									Toast.LENGTH_SHORT).show();
-					}
-					
-				}
-			}
-		});
+		// call to server with the queue id
+		JSONHandler task = new JSONHandler();
+		task.execute(new String[] { "http://192.168.0.102/webinventory/androidrpc/qprovider/" });
 	}
 
 	// ---sends a SMS message to another device---
@@ -147,11 +63,10 @@ public class MenuActivity extends Activity {
 		Intent tempIntent = new Intent(DELIVERED);
 		tempIntent.putExtra("phoneNo", phoneNumber);
 		tempIntent.putExtra("content", message);
-		
+
 		PendingIntent deliveredPI = PendingIntent.getBroadcast(this, 0,
 				tempIntent, 0);
 
-	
 		// ---when the SMS has been sent---
 		BroadcastReceiver sentBroadcastReceiver = new BroadcastReceiver() {
 			@Override
@@ -183,7 +98,7 @@ public class MenuActivity extends Activity {
 				}
 			}
 		};
-		
+
 		registerReceiver(sentBroadcastReceiver, new IntentFilter(SENT));
 		unregisterReceiver(sentBroadcastReceiver);
 
@@ -195,15 +110,26 @@ public class MenuActivity extends Activity {
 						Toast.LENGTH_SHORT).show();
 				switch (getResultCode()) {
 				case Activity.RESULT_OK:
-					String phoneNo = intent.getCharSequenceExtra("phoneNo").toString();
-					String content = intent.getCharSequenceExtra("content").toString();
-					for (Customer customer : queue.customer) {
-						if(customer.phone.phoneNo == phoneNo && customer.phone.message.content == content){
-							customer.phone.message.statusText = "DELIVERED";
-							Toast.makeText(getApplicationContext(), "SMS delivered to this " + phoneNo, Toast.LENGTH_LONG).show();
+					final String phoneNo = intent.getCharSequenceExtra("phoneNo").toString();
+					final String content = intent.getCharSequenceExtra("content").toString();
+					for (final Customer customer : queue.customer) {
+						if (customer.phone.phoneNo == phoneNo && customer.phone.message.content == content) {
+							runOnUiThread(new Runnable()
+			        		{
+
+								@Override
+								public void run() {
+									customer.phone.message.statusText = "DELIVERED";
+									Toast.makeText(getApplicationContext(),
+											"SMS delivered to this " + phoneNo,
+											Toast.LENGTH_LONG).show();
+								}
+								
+			        		});
+							
 						}
 					}
-					
+
 					Toast.makeText(getBaseContext(), "SMS delivered",
 							Toast.LENGTH_SHORT).show();
 					break;
@@ -214,7 +140,8 @@ public class MenuActivity extends Activity {
 				}
 			}
 		};
-		registerReceiver(deliveredBroadcastReceiver, new IntentFilter(DELIVERED));
+		registerReceiver(deliveredBroadcastReceiver,
+				new IntentFilter(DELIVERED));
 		unregisterReceiver(deliveredBroadcastReceiver);
 
 		SmsManager smsManager = SmsManager.getDefault();
@@ -223,51 +150,111 @@ public class MenuActivity extends Activity {
 
 	}
 
-	//monitor phone call activities
-		private class PhoneCallListener extends PhoneStateListener {
-	 
-			private boolean isPhoneCalling = false;
-	 
-			String LOG_TAG = "LOGGING 123";
-	 
-			@Override
-			public void onCallStateChanged(int state, String incomingNumber) {
-	 
-				if (TelephonyManager.CALL_STATE_RINGING == state) {
-					// phone ringing
-					Log.i(LOG_TAG, "RINGING, number: " + incomingNumber);
-				}
-	 
-				if (TelephonyManager.CALL_STATE_OFFHOOK == state) {
-					// active
-					Log.i(LOG_TAG, "OFFHOOK");
-	 
-					isPhoneCalling = true;
-				}
-	 
-				if (TelephonyManager.CALL_STATE_IDLE == state) {
-					// run when class initial and phone call ended, 
-					// need detect flag from CALL_STATE_OFFHOOK
-					Log.i(LOG_TAG, "IDLE");
-	 
-					if (isPhoneCalling) {
-	 
-						Log.i(LOG_TAG, "restart app");
-	 
-						// restart app
-						Intent i = getBaseContext().getPackageManager()
-							.getLaunchIntentForPackage(
-								getBaseContext().getPackageName());
-						i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-						startActivity(i);
-	 
-						isPhoneCalling = false;
-					}
-	 
+	private class JSONHandler extends AsyncTask<String, Void, String> {
+		String queue_list;
+
+		@Override
+		protected String doInBackground(String... urls) {
+			for (String url : urls) {
+				JSONRPCClient client = JSONRPCClient.create(url,
+						Versions.VERSION_2);
+				client.setConnectionTimeout(2000);
+				client.setSoTimeout(2000);
+
+				try {
+					String queue_id = getIntent().getStringExtra("QUQUE_ID");
+					qId = Integer.parseInt(queue_id);
+					System.out.println("Q ID: " + qId);
+					//Toast.makeText(MenuActivity.this,"got queue id " + qId, Toast.LENGTH_LONG).show();
+					queue_list = client.callString("getQ", qId);
+					System.out.println(queue_list);
+
+					runOnUiThread(new Runnable() {
+						@Override
+						public void run() {
+							String[][] customer_info = new String[3][3];
+							Gson gson = new Gson();
+							queue = gson.fromJson(JSONHandler.this.queue_list,
+									Queue.class);
+
+							i = 0;
+							for (Customer customer : queue.customer) {
+
+								tableRow = new TableRow(MenuActivity.this);
+								tableRow.setLayoutParams(new LayoutParams(
+										LayoutParams.MATCH_PARENT,
+										LayoutParams.WRAP_CONTENT));
+
+								String status = customer.phone.message.statusText;
+								String phoneNo = customer.phone.phoneNo;
+
+								customer_info[i][0] = phoneNo;
+								customer_info[i][1] = status;
+
+								CheckBox box = new CheckBox(MenuActivity.this);
+								box.setId(i);
+								box.setChecked(true);
+
+								tableRow.addView(box);
+								for (int j = 0; j < customer_info.length; j++) {
+
+									textView = new TextView(MenuActivity.this);
+									textView.setLayoutParams(new LayoutParams(
+											LayoutParams.WRAP_CONTENT,
+											LayoutParams.WRAP_CONTENT));
+
+									textView.setTextColor(0xFF000000);
+									textView.setText(customer_info[i][j]);
+									textView.setPadding(1, 1, 1, 1);
+
+									tableRow.addView(textView);
+								}
+								table_layout.addView(tableRow);
+								i++;
+							}
+
+							button.setOnClickListener(new View.OnClickListener() {
+								public void onClick(View v) {
+									for (int i = 0, j = table_layout
+											.getChildCount(); i < j; i++) {
+										TableRow row = (TableRow) table_layout
+												.getChildAt(i);
+
+										CheckBox checkBox = (CheckBox) row
+												.getChildAt(0);
+										if (checkBox.isChecked()) {
+											int customerIndex = checkBox.getId();
+
+											Customer customer = queue.customer.get(customerIndex);
+											String phoneNo = customer.phone.phoneNo;
+											String content = customer.phone.message.content;
+
+											if (phoneNo.length() > 0
+													&& content.length() > 0) {
+												sendSMS(phoneNo, content);
+												Toast.makeText(getBaseContext(),"Send message to "+ phoneNo,Toast.LENGTH_LONG).show();
+											} else
+												Toast.makeText(
+														getBaseContext(),
+														"Please enter both phone number and message.",
+														Toast.LENGTH_SHORT)
+														.show();
+										}
+
+									}
+								}
+							});
+						}
+					});
+
+				} catch (JSONRPCException e) {
+					e.printStackTrace(); // Invalid JSON Response caught here
 				}
 			}
+			return null;
 		}
-	 
+	}
+
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		// Inflate the menu; this adds items to the action bar if it is present.
