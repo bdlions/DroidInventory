@@ -1,5 +1,7 @@
 package com.webinventory;
 
+import java.util.Properties;
+
 import org.alexd.jsonrpc.JSONRPCClient;
 import org.alexd.jsonrpc.JSONRPCException;
 import org.alexd.jsonrpc.JSONRPCParams.Versions;
@@ -24,6 +26,7 @@ import android.widget.Toast;
 import android.widget.TableRow.LayoutParams;
 
 import com.google.gson.Gson;
+import com.webinventory.parser.customer.AssetsPropertyReader;
 import com.webinventory.parser.customer.Customer;
 import com.webinventory.parser.customer.Queue;
 
@@ -46,10 +49,13 @@ public class MenuActivity extends Activity {
 
 		table_layout = (TableLayout) findViewById(R.id.tableLayout1);
 		button = (Button) findViewById(R.id.buttonSendSMS);
-
+		
+		AssetsPropertyReader asserproperties = new AssetsPropertyReader(MenuActivity.this);
+		Properties project_properties = asserproperties.getProperties("project_config.properties");
+		
 		// call to server with the queue id
 		JSONHandler task = new JSONHandler();
-		task.execute(new String[] { "http://192.168.0.102/webinventory/androidrpc/qprovider/" });
+		task.execute(new String[] {project_properties.getProperty("server_url") + "androidrpc/qprovider/" });
 	}
 
 	// ---sends a SMS message to another device---
@@ -172,11 +178,12 @@ public class MenuActivity extends Activity {
 					runOnUiThread(new Runnable() {
 						@Override
 						public void run() {
-							String[][] customer_info = new String[3][3];
 							Gson gson = new Gson();
 							queue = gson.fromJson(JSONHandler.this.queue_list,
 									Queue.class);
-
+							
+							String[][] customer_info = new String[queue.customer.size()][3];
+							
 							i = 0;
 							for (Customer customer : queue.customer) {
 
@@ -196,7 +203,7 @@ public class MenuActivity extends Activity {
 								box.setChecked(true);
 
 								tableRow.addView(box);
-								for (int j = 0; j < customer_info.length; j++) {
+								for (int j = 0; j < customer_info[i].length; j++) {
 
 									textView = new TextView(MenuActivity.this);
 									textView.setLayoutParams(new LayoutParams(
