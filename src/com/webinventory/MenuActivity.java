@@ -25,6 +25,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.TableRow.LayoutParams;
 
+
 import com.google.gson.Gson;
 import com.webinventory.parser.customer.AssetsPropertyReader;
 import com.webinventory.parser.customer.Customer;
@@ -63,15 +64,13 @@ public class MenuActivity extends Activity {
 		String SENT = "SMS_SENT";
 		String DELIVERED = "SMS_DELIVERED";
 
-		PendingIntent sentPI = PendingIntent.getBroadcast(this, 0, new Intent(
-				SENT), 0);
+		PendingIntent sentPI = PendingIntent.getBroadcast(this, 0, new Intent(SENT), 0);
 
 		Intent tempIntent = new Intent(DELIVERED);
 		tempIntent.putExtra("phoneNo", phoneNumber);
 		tempIntent.putExtra("content", message);
 
-		PendingIntent deliveredPI = PendingIntent.getBroadcast(this, 0,
-				tempIntent, 0);
+		PendingIntent deliveredPI = PendingIntent.getBroadcast(this, 0,tempIntent, 0);
 
 		// ---when the SMS has been sent---
 		BroadcastReceiver sentBroadcastReceiver = new BroadcastReceiver() {
@@ -111,9 +110,22 @@ public class MenuActivity extends Activity {
 		// ---when the SMS has been delivered---
 		BroadcastReceiver deliveredBroadcastReceiver = new BroadcastReceiver() {
 			@Override
-			public void onReceive(Context arg0, Intent intent) {
-				Toast.makeText(getBaseContext(), "Delivery report",
-						Toast.LENGTH_SHORT).show();
+			public void onReceive(Context context, Intent intent) {
+				Toast.makeText(getBaseContext(), "Delivery report",Toast.LENGTH_SHORT).show();
+				
+				// set ACTION_BOOT_COMPLETED dynamically
+				//IntentFilter filter = new IntentFilter();
+				//filter.addAction("android.intent.action.BOOT_COMPLETED");
+				
+				//IntentFilter bootFilter = new IntentFilter(Intent.ACTION_BOOT_COMPLETED);
+
+				 
+				/*if (intent.getAction().equals(Intent.ACTION_BOOT_COMPLETED)) {
+					Intent i = new Intent();
+					i.setAction("com.webinventory.StartAtBootService");
+					context.startService(i);
+				}*/
+			     
 				switch (getResultCode()) {
 				case Activity.RESULT_OK:
 					final String phoneNo = intent.getCharSequenceExtra("phoneNo").toString();
@@ -136,23 +148,21 @@ public class MenuActivity extends Activity {
 						}
 					}
 
-					Toast.makeText(getBaseContext(), "SMS delivered",
-							Toast.LENGTH_SHORT).show();
+					Toast.makeText(getBaseContext(), "SMS delivered",Toast.LENGTH_SHORT).show();
 					break;
 				case Activity.RESULT_CANCELED:
-					Toast.makeText(getBaseContext(), "SMS not delivered",
-							Toast.LENGTH_SHORT).show();
+					Toast.makeText(getBaseContext(), "SMS not delivered",Toast.LENGTH_SHORT).show();
 					break;
 				}
 			}
 		};
-		registerReceiver(deliveredBroadcastReceiver,
-				new IntentFilter(DELIVERED));
+		
+		
+		registerReceiver(deliveredBroadcastReceiver,new IntentFilter(DELIVERED));
 		unregisterReceiver(deliveredBroadcastReceiver);
 
 		SmsManager smsManager = SmsManager.getDefault();
-		smsManager.sendTextMessage(phoneNumber, null, message, sentPI,
-				deliveredPI);
+		smsManager.sendTextMessage(phoneNumber, null, message, sentPI, deliveredPI);
 
 	}
 
@@ -162,8 +172,7 @@ public class MenuActivity extends Activity {
 		@Override
 		protected String doInBackground(String... urls) {
 			for (String url : urls) {
-				JSONRPCClient client = JSONRPCClient.create(url,
-						Versions.VERSION_2);
+				JSONRPCClient client = JSONRPCClient.create(url, Versions.VERSION_2);
 				client.setConnectionTimeout(2000);
 				client.setSoTimeout(2000);
 
@@ -222,13 +231,10 @@ public class MenuActivity extends Activity {
 
 							button.setOnClickListener(new View.OnClickListener() {
 								public void onClick(View v) {
-									for (int i = 0, j = table_layout
-											.getChildCount(); i < j; i++) {
-										TableRow row = (TableRow) table_layout
-												.getChildAt(i);
+									for (int i = 0, j = table_layout.getChildCount(); i < j; i++) {
+										TableRow row = (TableRow) table_layout.getChildAt(i);
 
-										CheckBox checkBox = (CheckBox) row
-												.getChildAt(0);
+										CheckBox checkBox = (CheckBox) row.getChildAt(0);
 										if (checkBox.isChecked()) {
 											int customerIndex = checkBox.getId();
 
@@ -236,16 +242,13 @@ public class MenuActivity extends Activity {
 											String phoneNo = customer.phone.phoneNo;
 											String content = customer.phone.message.content;
 
-											if (phoneNo.length() > 0
-													&& content.length() > 0) {
+											if (phoneNo.length() > 0 && content.length() > 0) {
 												sendSMS(phoneNo, content);
 												Toast.makeText(getBaseContext(),"Send message to "+ phoneNo,Toast.LENGTH_LONG).show();
 											} else
-												Toast.makeText(
-														getBaseContext(),
+												Toast.makeText(getBaseContext(),
 														"Please enter both phone number and message.",
-														Toast.LENGTH_SHORT)
-														.show();
+														Toast.LENGTH_SHORT).show();
 										}
 
 									}
